@@ -64,7 +64,8 @@ ALLOWED_COMMANDS = {
     "python -m pip install -r requirements.txt", # установка пакетов из файла
     "jupyter notebook",                  # запуск Jupyter Notebook
     "jupyter lab",                       # запуск JupyterLab
-    "ipython",                           # запуск интерактивного Python через IPython
+    "ipython",
+    "python privet.py",# запуск интерактивного Python через IPython
 }
 WORKDIR = Path(".").resolve()
 MAX_TEXT_FILE_SIZE = 4000  # Telegram limit
@@ -197,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
