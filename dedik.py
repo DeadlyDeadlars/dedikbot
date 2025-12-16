@@ -124,7 +124,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        result = subprocess.run(text, shell=True, capture_output=True, text=True, timeout=5)
+        result = subprocess.run(text, shell=True, capture_output=True, text=True) 
         output = result.stdout or result.stderr or "(пусто)"
         for i in range(0, len(output), MAX_TEXT_FILE_SIZE):
             await update.message.reply_text(
@@ -198,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
