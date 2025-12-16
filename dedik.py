@@ -19,6 +19,8 @@ ALLOWED_COMMANDS = {
     "whoami",
     "df -h",
     "uptime",
+    "cd ..",
+    "cd",
 }
 
 # =================================================
@@ -87,5 +89,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
