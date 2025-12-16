@@ -27,6 +27,44 @@ ALLOWED_COMMANDS = {
     "whoami",
     "df -h",
     "uptime",
+    "python --version",
+    "python -V",
+    "python3 --version",
+    "python3 -V",
+    "python -m pip --version",
+    "python -m pip list",
+    "python -m pip freeze",
+    "python -m pip show <package_name>",
+    "python -m pip install <package_name>",
+    "python -m pip install --upgrade <package_name>",
+    "python -m pip uninstall <package_name>",
+    "python -m pip check",
+    "python -m pip search <package_name>",
+    "python -m pip install -r requirements.txt",
+    "python -m pip download <package_name>",
+    "python -m venv <env_name>",
+    "source <env_name>/bin/activate",
+    "deactivate",
+    "python -m pip cache dir",
+    "python -m pip cache purge",
+    "python <file.py>",                  # запуск Python-скрипта
+    "python3 <file.py>",                 # запуск с python3
+    "python -i <file.py>",               # запуск скрипта с интерактивной консолью после выполнения
+    "python -m <module>",                # запуск модуля как скрипта
+    "python -c \"<command>\"",           # выполнение команды Python прямо в терминале
+    "python -m timeit \"<statement>\"",  # измерение времени выполнения выражения
+    "python -m pdb <file.py>",           # запуск скрипта с отладчиком
+    "python -m venv <env_name>",         # создание виртуального окружения
+    "source <env_name>/bin/activate",    # активация виртуального окружения (Linux/Mac)
+    "<env_name>\\Scripts\\activate",     # активация виртуального окружения (Windows)
+    "deactivate",                        # деактивация виртуального окружения
+    "python -m pip install <package_name>",  # установка пакета
+    "python -m pip list",                # список установленных пакетов
+    "python -m pip freeze > requirements.txt", # сохранение списка пакетов
+    "python -m pip install -r requirements.txt", # установка пакетов из файла
+    "jupyter notebook",                  # запуск Jupyter Notebook
+    "jupyter lab",                       # запуск JupyterLab
+    "ipython",                           # запуск интерактивного Python через IPython
 }
 
 WORKDIR = Path(".").resolve()
@@ -202,3 +240,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
