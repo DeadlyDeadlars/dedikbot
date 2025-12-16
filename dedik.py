@@ -125,7 +125,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         result = subprocess.run(text, shell=True, capture_output=True, text=True, timeout=5)
         output = result.stdout or result.stderr or "(пусто)"
-        # Разбиваем на части, если слишком длинный
         for i in range(0, len(output), MAX_TEXT_FILE_SIZE):
             await update.message.reply_text(
                 f"""```
@@ -135,6 +134,26 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {e}")
+
+async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_allowed(update):
+        return
+
+    doc = update.message.document
+    filename = doc.file_name
+    target = (WORKDIR / filename).resolve()
+
+    if not str(target).startswith(str(WORKDIR)):
+        await update.message.reply_text("Запрещённый путь")
+        return
+
+    try:
+        await update.message.reply_text(f"Сохраняю файл {filename} в {target}")
+        file = await doc.get_file()
+        await file.download_to_drive(custom_path=str(target))
+        await update.message.reply_text(f"Файл загружен: {target}")
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка при загрузке файла: {e}")
 
 async def cmd_cat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_allowed(update):
@@ -163,10 +182,8 @@ async def cmd_cat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 {text}
 ```""", parse_mode="Markdown")
     else:
-        await update.message.reply_text("Файл слишком большой, отправляю как документ")
-        await update.message.reply_document(InputFile(path))
+        await update.message.reply_document(document=str(path))  # Передаем строку пути вместо PosixPath
 
-# Остальной код /get /put /pip и т.д. остаётся без изменений
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -174,12 +191,13 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("cat", cmd_cat))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-    # остальные обработчики команд
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
 
     app.run_polling()
 
 if __name__ == "__main__":
     main()
+
 
 
 
