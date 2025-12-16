@@ -68,176 +68,113 @@ ALLOWED_COMMANDS = {
 }
 
 WORKDIR = Path(".").resolve()
-MAX_TEXT_FILE_SIZE = 100_000  # 100 KB
-# =================================================
-
-
-def is_allowed(update: Update) -> bool:
-    return update.effective_user.id in ALLOWED_USERS
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        await update.message.reply_text("Доступ запрещён")
-        return
-
-    keyboard = [["Открыть терминал"]]
-    await update.message.reply_text(
-        "Бот управления сервером\n"
-        "Команды:\n"
-        "/get <path> — скачать файл\n"
-        "/cat <path> — показать текстовый файл\n"
-        "/put <path> — заменить файл текстом из следующего сообщения\n"
-        "Отправь файл — он загрузится в текущую директорию",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
-    )
 
 
 async def terminal_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
-
-    context.user_data["terminal"] = True
-    await update.message.reply_text(
-        "Терминал открыт. Разрешённые команды:\n"
-        + "\n".join(ALLOWED_COMMANDS)
-    )
+if not is_allowed(update):
+return
+context.user_data["terminal"] = True
+await update.message.reply_text("Терминал открыт. Разрешённые команды:\n" + "\n".join(ALLOWED_COMMANDS))
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
-
-    text = update.message.text
-
-    if text == "Открыть терминал":
-        await terminal_mode(update, context)
-        return
-
-    # режим редактирования файла
-    if context.user_data.get("put_path"):
-        path = context.user_data.pop("put_path")
-        path = (WORKDIR / path).resolve()
-        if not str(path).startswith(str(WORKDIR)):
-            await update.message.reply_text("Запрещённый путь")
-            return
-        path.write_text(text, encoding="utf-8")
-        await update.message.reply_text(f"Файл сохранён: {path}")
-        return
-
-    if not context.user_data.get("terminal"):
-        await update.message.reply_text("Нажмите 'Открыть терминал'")
-        return
-
-    if text not in ALLOWED_COMMANDS:
-        await update.message.reply_text("Команда запрещена")
-        return
-
-    try:
-        result = subprocess.run(
-            text,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        output = result.stdout or result.stderr or "(пусто)"
-        await update.message.reply_text(f"```\n{output}\n```", parse_mode="Markdown")
-    except Exception as e:
-        await update.message.reply_text(f"Ошибка: {e}")
+if not is_allowed(update):
+return
 
 
-async def cmd_get(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
+text = update.message.text
 
-    if not context.args:
-        await update.message.reply_text("Использование: /get <path>")
-        return
 
-    path = (WORKDIR / context.args[0]).resolve()
-    if not path.exists() or not path.is_file():
-        await update.message.reply_text("Файл не найден")
-        return
+if text == "Открыть терминал":
+await terminal_mode(update, context)
+return
 
-    if not str(path).startswith(str(WORKDIR)):
-        await update.message.reply_text("Запрещённый путь")
-        return
 
-    await update.message.reply_document(InputFile(path))
+if context.user_data.get("put_path"):
+path = context.user_data.pop("put_path")
+path = (WORKDIR / path).resolve()
+if not str(path).startswith(str(WORKDIR)):
+await update.message.reply_text("Запрещённый путь")
+return
+path.write_text(text, encoding="utf-8")
+await update.message.reply_text(f"Файл сохранён: {path}")
+return
+
+
+if not context.user_data.get("terminal"):
+await update.message.reply_text("Нажмите 'Открыть терминал'")
+return
+
+
+if text not in ALLOWED_COMMANDS:
+await update.message.reply_text("Команда запрещена")
+return
+
+
+try:
+result = subprocess.run(text, shell=True, capture_output=True, text=True, timeout=5)
+output = result.stdout or result.stderr or "(пусто)"
+# Разбиваем на части, если слишком длинный
+for i in range(0, len(output), MAX_TEXT_FILE_SIZE):
+await update.message.reply_text(f"```
+{output[i:i+MAX_TEXT_FILE_SIZE]}
+```", parse_mode="Markdown")
+except Exception as e:
+await update.message.reply_text(f"Ошибка: {e}")
 
 
 async def cmd_cat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
-
-    if not context.args:
-        await update.message.reply_text("Использование: /cat <path>")
-        return
-
-    path = (WORKDIR / context.args[0]).resolve()
-    if not path.exists() or not path.is_file():
-        await update.message.reply_text("Файл не найден")
-        return
-
-    if path.stat().st_size > MAX_TEXT_FILE_SIZE:
-        await update.message.reply_text("Файл слишком большой")
-        return
-
-    try:
-        text = path.read_text(encoding="utf-8")
-    except Exception:
-        await update.message.reply_text("Не удалось прочитать как текст")
-        return
-
-    await update.message.reply_text(f"```\n{text}\n```", parse_mode="Markdown")
+if not is_allowed(update):
+return
+if not context.args:
+await update.message.reply_text("Использование: /cat <path>")
+return
 
 
-async def cmd_put(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
-
-    if not context.args:
-        await update.message.reply_text("Использование: /put <path>")
-        return
-
-    context.user_data["put_path"] = context.args[0]
-    await update.message.reply_text(
-        "Отправь СЛЕДУЮЩИМ сообщением новый текст файла (он полностью заменит старый)."
-    )
+path = (WORKDIR / context.args[0]).resolve()
+if not path.exists() or not path.is_file():
+await update.message.reply_text("Файл не найден")
+return
 
 
-async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_allowed(update):
-        return
+if not str(path).startswith(str(WORKDIR)):
+await update.message.reply_text("Запрещённый путь")
+return
 
-    doc = update.message.document
-    filename = doc.file_name
-    target = (WORKDIR / filename).resolve()
 
-    if not str(target).startswith(str(WORKDIR)):
-        await update.message.reply_text("Запрещённый путь")
-        return
+try:
+text = path.read_text(encoding="utf-8")
+except Exception:
+await update.message.reply_text("Не удалось прочитать как текст")
+return
 
-    file = await doc.get_file()
-    await file.download_to_drive(custom_path=str(target))
-    await update.message.reply_text(f"Файл загружен: {target}")
+
+if len(text) <= MAX_TEXT_FILE_SIZE:
+await update.message.reply_text(f"```
+{text}
+```", parse_mode="Markdown")
+else:
+await update.message.reply_text("Файл слишком большой, отправляю как документ")
+await update.message.reply_document(InputFile(path))
+
+
+# Остальной код /get /put /pip и т.д. остаётся без изменений
 
 
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("get", cmd_get))
-    app.add_handler(CommandHandler("cat", cmd_cat))
-    app.add_handler(CommandHandler("put", cmd_put))
 
-    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("cat", cmd_cat))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+# остальные обработчики команд
 
-    app.run_polling()
+
+app.run_polling()
 
 
 if __name__ == "__main__":
-    main()
+main()
+
 
