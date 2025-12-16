@@ -5,7 +5,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 # ================== НАСТРОЙКИ ==================
-BOT_TOKEN = os.getenv("8576364825:AAH_XhNNo2dpZo4Hops0Ucbyl6uG_aHKzUw")  # токен хранить в env
+BOT_TOKEN = os.getenv("TG_BOT_TOKEN")  # токен хранить в env
 
 # Telegram ID разрешённых пользователей
 ALLOWED_USERS = {7524470943}  # <-- замени на свой TG ID
@@ -85,3 +85,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
