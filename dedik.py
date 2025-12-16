@@ -3,6 +3,8 @@ import subprocess
 import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from dotenv import load_dotenv
+load_dotenv()
 
 # ================== НАСТРОЙКИ ==================
 BOT_TOKEN = os.getenv("TG_BOT_TOKEN")  # токен хранить в env
@@ -85,4 +87,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
