@@ -19,7 +19,7 @@ BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("TG_BOT_TOKEN не найден. Проверь .env")
 
-ALLOWED_USERS = {7524470943,8233731019}
+ALLOWED_USERS = {7524470943,8233731019,419692445}
 
 ALLOWED_COMMANDS = {
     "ls",
@@ -198,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
